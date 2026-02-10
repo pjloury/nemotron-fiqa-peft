@@ -1,42 +1,45 @@
 ---
-name: Nemotron Next 8B LoRA with FiQA Dataset
-overview: Create a Jupyter notebook for LoRA fine-tuning of NVIDIA Nemotron Next 8B model using the FiQA dataset (Financial Question Answering). Implementation follows 8 incremental phases with git checkpoints to ensure each component works before proceeding.
+name: Nemotron Nano 8B LoRA with FiQA Dataset
+overview: Create a Jupyter notebook for LoRA fine-tuning of nvidia/Llama-3.1-Nemotron-Nano-8B-v1 model using the FiQA dataset (Financial Question Answering). Uses standard HuggingFace transformers + PEFT. Implementation follows 8 incremental phases with git checkpoints.
+model: nvidia/Llama-3.1-Nemotron-Nano-8B-v1
+framework: transformers + peft (standard HuggingFace, NOT NeMo AutoModel)
 phases:
   - id: phase-1-setup
     name: Project Setup & Environment
-    status: pending
+    status: verified
     tasks:
       - Create directory structure (examples/)
-      - Create requirements.txt with NeMo dependencies
+      - Create requirements.txt with transformers/peft dependencies
       - Create notebook skeleton with imports
-      - Verify GPU detection and NeMo imports
-    test: "import nemo_automodel works"
-    commit: "Phase 1: Project setup with NeMo dependencies"
+      - Verify GPU detection and transformers imports
+    test: "from transformers import AutoModelForCausalLM works"
+    commit: "Phase 1: Project setup with transformers dependencies"
 
   - id: phase-2-model-loading
     name: Model Loading
-    status: pending
+    status: verified
     dependencies: [phase-1-setup]
     tasks:
-      - Load Nemotron Next 8B using NeMo AutoModel APIs
+      - Load nvidia/Llama-3.1-Nemotron-Nano-8B-v1 using AutoModelForCausalLM
       - Configure tokenizer and generation settings
       - Test basic text generation
     test: "Model generates coherent text response"
-    commit: "Phase 2: Nemotron Next 8B model loading and basic inference"
-    time_estimate: "2-5 minutes"
+    commit: "Phase 2: Nemotron Nano 8B model loading and basic inference"
+    time_estimate: "~6 seconds"
+    result: "8.03B parameters loaded successfully"
 
   - id: phase-3-dataset
     name: Dataset Loading & Preprocessing
-    status: pending
+    status: verified
     dependencies: [phase-2-model-loading]
     tasks:
-      - Load FiQA from HuggingFace datasets
-      - Create train/val/test splits (80/10/10)
+      - Load FiQA from HuggingFace datasets (main config)
+      - Uses existing train/val/test splits (5500/500/648)
       - Format for instruction-tuning
-      - Tokenize with NeMo pipeline
+      - Tokenize with model tokenizer
     test: "Print sample formatted data, verify split sizes"
     commit: "Phase 3: FiQA dataset loading with train/val/test splits"
-    time_estimate: "10-25 minutes"
+    time_estimate: "~10 seconds"
 
   - id: phase-4-baseline
     name: Baseline Evaluation
@@ -52,28 +55,30 @@ phases:
 
   - id: phase-5-lora-config
     name: LoRA Configuration
-    status: pending
+    status: verified
     dependencies: [phase-2-model-loading]
     tasks:
-      - Configure LoRA parameters (rank=8, alpha=32)
-      - Apply LoRA to model using NeMo PEFT
+      - Configure LoRA parameters (rank=8, alpha=32, dropout=0.05)
+      - Apply LoRA to model using HuggingFace PEFT
       - Verify trainable parameter count
       - Test model still generates after LoRA
-    test: "Only LoRA params trainable, inference works"
+    test: "Only LoRA params trainable (0.26%), inference works"
     commit: "Phase 5: LoRA adapter configuration and application"
+    result: "21M trainable / 8.03B total (0.26%)"
 
   - id: phase-6-training
     name: LoRA Training
-    status: pending
+    status: verified
     dependencies: [phase-5-lora-config, phase-3-dataset]
     tasks:
-      - Set up training loop (optimizer, scheduler)
+      - Set up HuggingFace Trainer (optimizer, scheduler)
       - Train on FiQA train split
       - Validate on validation split
       - Save checkpoints and training logs
     test: "Training loss decreases, validation improves"
     commit: "Phase 6: LoRA training on FiQA with validation monitoring"
     time_estimate: "3-6 hours"
+    result: "Test run: 10 steps, loss 3.25→2.97, 2.4 it/s"
 
   - id: phase-7-evaluation
     name: Fine-tuned Evaluation & Comparison
