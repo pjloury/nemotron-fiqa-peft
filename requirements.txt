@@ -1,32 +1,20 @@
-# NeMo AutoModel and dependencies
-# Install NeMo AutoModel from source for latest features
-# git clone https://github.com/NVIDIA-NeMo/Automodel.git && cd Automodel && uv pip install -e .
+# Core dependencies for Nemotron Next 8B LoRA Fine-tuning with FiQA
 
-# Core dependencies
-torch>=2.0.0
+# NeMo AutoModel
+nemo-automodel>=0.2.0
+
+# Transformers and PEFT
 transformers>=4.40.0
-datasets>=2.19.0
+peft>=0.8.0
 accelerate>=0.30.0
-safetensors>=0.4.0
 
-# NeMo Framework (for PEFT and training utilities)
-# nemo_toolkit[all]>=2.0.0
+# Data processing
+datasets>=2.16.0
 
-# Evaluation metrics
-evaluate>=0.4.0
-rouge-score>=0.1.2
-nltk>=3.8.0
+# Training utilities
+torch>=2.0.0
+tensorboard>=2.15.0
 
-# Visualization
-matplotlib>=3.8.0
-seaborn>=0.13.0
-pandas>=2.0.0
-
-# Jupyter
-jupyter>=1.0.0
-ipywidgets>=8.0.0
-
-# Utilities
+# Optional but recommended
+numpy>=1.24.0
 tqdm>=4.66.0
-pyyaml>=6.0.0
-
