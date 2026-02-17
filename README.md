@@ -167,10 +167,74 @@ The training completed successfully with:
 
 ## Evaluation
 
-For evaluation, see the separate evaluation plan (`nemotron-next-8b-fiqa-evaluation.plan.md`). The evaluation uses:
-- NeMo Evaluator SDK for metrics calculation
-- Semantic similarity as primary metric
-- Comparison between base and PEFT models
+Multiple evaluation methods are available for comparing base vs PEFT models:
+
+### Quick Start
+
+```bash
+# Direct evaluation (recommended for FiQA)
+python evaluate_fiqa.py --compare-base --max-samples 648
+
+# Or use the complete workflow
+./run_full_evaluation.sh compare 648
+```
+
+### Evaluation Methods
+
+**Direct Evaluation** (`evaluate_fiqa.py`) - **Recommended**
+- Loads model directly (no API needed)
+- FiQA-specific metrics
+- Fast and simple
+- Usage: `python evaluate_fiqa.py --compare-base`
+
+### Evaluation Options
+
+```bash
+# PEFT model only
+python evaluate_fiqa.py --max-samples 648
+
+# Compare PEFT vs Base
+python evaluate_fiqa.py --compare-base --max-samples 648
+
+# Quick test (3 samples)
+python evaluate_fiqa.py --max-samples 3 --verbose
+```
+
+### Metrics
+
+The evaluation uses multiple metrics to assess model performance:
+
+- **Semantic Similarity** (Primary): Cosine similarity using sentence-transformers (BERTScore/SBERT embeddings). Best captures answer quality and handles length differences. Expected improvement: +5-15% for PEFT vs base.
+
+- **ROUGE Scores**: 
+  - ROUGE-1: Unigram overlap (content coverage)
+  - ROUGE-2: Bigram overlap (phrase-level similarity)
+  - ROUGE-L: Longest common subsequence (sentence-level similarity)
+  - Expected improvement: +3-10% across all variants
+
+- **BLEU Score**: N-gram precision for answer quality. Expected improvement: +2-8%
+
+- **Exact Match (EM)**: Binary string match. Strict metric, expected modest improvement: +1-5%
+
+- **F1 Score**: Token-level precision and recall. Expected improvement: +2-8%
+
+See `EVALUATION_SCRIPT_GUIDE.md` for detailed evaluation documentation and checkpointing.
+
+## API Server
+
+The project includes an OpenAI-compatible API server for serving the model:
+
+```bash
+# Start server
+python serve_model.py --port 8000
+
+# Or use startup script
+./start_server.sh
+
+# Test endpoint
+python test_endpoint.py
+# Or: curl http://localhost:8000/
+```
 
 ## Model Usage
 
@@ -210,6 +274,47 @@ inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 outputs = model.generate(**inputs, max_new_tokens=512, temperature=0.7)
 response = tokenizer.decode(outputs[0], skip_special_tokens=True)
 ```
+
+## Quick Reference
+
+### Key Files
+- **Training**: `train_fiqa_peft.py`
+- **Evaluation**: `evaluate_fiqa.py`
+- **API Server**: `serve_model.py`
+
+### Results Locations
+- **Final model**: `checkpoints/final_model/`
+- **Evaluation results**: `./results/eval_results.json`
+- **Training logs**: `outputs/logs/` (view with TensorBoard)
+
+### Common Commands
+
+```bash
+# Activate environment
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Check GPU
+nvidia-smi
+
+# View training logs
+tensorboard --logdir outputs/logs
+
+# Test API endpoint
+curl http://localhost:8000/
+```
+
+### Troubleshooting
+
+**Model won't load**: Check GPU memory with `nvidia-smi`
+
+**API server won't start**: Verify port 8000 is available: `lsof -i :8000`
+
+**Evaluation fails**: Ensure model checkpoint exists: `ls checkpoints/final_model/`
+
+**Import errors**: Activate venv: `source venv/bin/activate`
 
 ## Technical Notes
 
